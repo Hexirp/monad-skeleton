@@ -55,14 +55,20 @@ embalm t = Zombie (Spine t id) Sunlight
 
 -- | Decompose a zombie as a list of possibilities.
 disembalm :: Zombie t a -> [MonadView t (Zombie t) a]
-disembalm (Zombie ss) = do
-  Spine v c <- ss
-  case v of
-    Return a -> viewL c [Return a] $ \(Kleisli k) c' -> case k a of
-      Zombie ss' -> disembalm $ Zombie $ map (graftSpine c') ss'
-    t :>>= k -> return $ t :>>= \a -> case k a of
-      Zombie ss' -> Zombie $ map (graftSpine c) ss'
-  
+disembalm Sunlight = []
+disembalm (Zombie x xs) = disembalm' x ++ disembalm xs
+
+disembalm' :: Spine t (Zombie t) a -> [MonadView t (Zombie t) a]
+disembalm' (Spine v c) = case v of
+  Return a -> viewL c [Return a] $ \(Kleisli k) c' -> case k a of
+    s -> disembalm $ mapZ (graftSpine c') s
+  t :>>= k -> return $ t :>>= \a -> case k a of
+    s -> mapZ (graftSpine c) s
+
+mapZ :: (Spine t (Zombie t) a -> Spine t (Zombie t) b)
+     -> Zombie t a -> Zombie t b
+mapZ f Sunlight = Sunlight
+mapZ f (Zombie x xs) = Zombie (f x) (mapZ f xs)
 
 -- | Like 'hoistSkeleton'
 hoistZombie :: forall s t a. (forall x. s x -> t x) -> Zombie s a -> Zombie t a
