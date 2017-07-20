@@ -74,6 +74,6 @@ mapZ f (Zombie x xs) = Zombie (f x) (mapZ f xs)
 hoistZombie :: forall s t a. (forall x. s x -> t x) -> Zombie s a -> Zombie t a
 hoistZombie f = go where
   go :: forall x. Zombie s x -> Zombie t x
-  go (Zombie ss) = Zombie [Spine (hoistMV f go v) (transCat (transKleisli go) c)
-    | Spine v c <- ss]
+  go Sunlight = Sunlight
+  go (Zombie (Spine v c) xs) = Zombie (Spine (hoistMV f go v) (transCat (transKleisli go) c)) (go xs)
 {-# INLINE hoistZombie #-}
