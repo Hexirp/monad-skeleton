@@ -34,7 +34,7 @@ instance Applicative (Zombie t) where
 instance Alternative (Zombie t) where
   empty = Sunlight
   Sunlight <|> y = y
-  Zombie x xs <|> y = Zombie x (xs <|> y)
+  Zombie v c xs <|> y = Zombie v c (xs <|> y)
 
 instance Monad (Zombie t) where
   return a = Zombie (Spine (Return a) id) Sunlight
