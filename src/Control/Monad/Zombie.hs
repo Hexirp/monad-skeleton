@@ -19,7 +19,7 @@ graftSpine c (Spine v d) = Spine v (Tree d c)
 {-# INLINE graftSpine #-}
 
 -- | 'Zombie' is a variant of 'Skeleton' which has an 'Alternative' instance.
-newtype Zombie t a = Zombie { unZombie :: [Spine t (Zombie t) a] }
+data Zombie t a = Sunlight | Zombie (Spine t (Zombie t) a) (Zombie t a)
 
 instance Functor (Zombie t) where
   fmap = liftM
@@ -30,12 +30,14 @@ instance Applicative (Zombie t) where
   (*>) = (>>)
 
 instance Alternative (Zombie t) where
-  empty = Zombie []
-  Zombie xs <|> Zombie ys = Zombie (xs ++ ys)
+  empty = Sunlight
+  Sunlight <|> y = y
+  Zombie x xs <|> y = Zombie x $ xs <|> y
 
 instance Monad (Zombie t) where
-  return a = Zombie [Spine (Return a) id]
-  Zombie xs >>= k = Zombie $ map (graftSpine $ Leaf $ Kleisli k) xs
+  return a = Zombie (Spine (Return a) id) Sunlight
+  Sunlight >>= k = Sunlight
+  Zombie x xs >>= k = Zombie (graftSpine (Leaf $ Kleisli k) x) (xs >>= k)
 
 instance MonadPlus (Zombie t) where
   mzero = empty
@@ -48,7 +50,7 @@ liftZ t = embalm (t :>>= return)
 
 -- | Turn a decomposed form into a composed form.
 embalm :: MonadView t (Zombie t) a -> Zombie t a
-embalm t = Zombie [Spine t id]
+embalm t = Zombie (Spine t id) Sunlight
 {-# INLINE embalm #-}
 
 -- | Decompose a zombie as a list of possibilities.
@@ -60,6 +62,7 @@ disembalm (Zombie ss) = do
       Zombie ss' -> disembalm $ Zombie $ map (graftSpine c') ss'
     t :>>= k -> return $ t :>>= \a -> case k a of
       Zombie ss' -> Zombie $ map (graftSpine c) ss'
+  
 
 -- | Like 'hoistSkeleton'
 hoistZombie :: forall s t a. (forall x. s x -> t x) -> Zombie s a -> Zombie t a
