@@ -37,9 +37,9 @@ instance Alternative (Zombie t) where
   Zombie v c xs <|> y = Zombie v c (xs <|> y)
 
 instance Monad (Zombie t) where
-  return a = Zombie (Spine (Return a) id) Sunlight
+  return a = Zombie (Return a) id Sunlight
   Sunlight >>= k = Sunlight
-  Zombie x xs >>= k = Zombie (graftSpine (Leaf $ Kleisli k) x) (xs >>= k)
+  Zombie v c xs >>= k = Zombie v (Tree c $ Leaf $ Kleisli k) (xs >>= k)
 
 instance MonadPlus (Zombie t) where
   mzero = empty
