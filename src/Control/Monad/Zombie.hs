@@ -55,8 +55,8 @@ liftZ t = embalm (t :>>= return)
 
 -- | Turn a decomposed form into a composed form.
 embalm :: MonadView t (Zombie t) a -> Zombie t a
-embalm (Return x) = ReturnZ x id Sunlight
-embalm (y :>>= z) = BindZ y z id Sunlight
+embalm (Return x) = ReturnZ x Sunlight
+embalm (y :>>= z) = BindZ y (Leaf $ Kleisli z) Sunlight
 {-# INLINE embalm #-}
 
 -- | Decompose a zombie as a list of possibilities.
