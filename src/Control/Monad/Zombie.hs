@@ -69,7 +69,21 @@ disembalmR :: a -> [MonadView t (Zombie t) a]
 disembalmR a = [Return a]
 
 disembalmB :: t y -> Cat (Kleisli (Zombie t)) y a -> [MonadView t (Zombie t) a]
-disembalmB = undefined
+disembalmB x c = return $ x :>>= disembalmG c where
+
+disembalmG :: Cat (Kleisli (Zombie t)) y a -> y -> Zombie t a
+disembalmG c y = viewL c (ReturnZ y Sunlight) (disembalmF y)
+
+disembalmF :: y -> Kleisli (Zombie t) y z -> Cat (Kleisli (Zombie t)) z a -> Zombie t a
+disembalmF y (Kleisli k) c = case k y of
+  Sunlight -> Sunlight
+  ReturnZ z zs -> disembalmG c z <|> mapZ c zs
+  BindZ z d zs -> BindZ z (c . d) (mapZ c zs)
+
+mapZ :: Cat (Kleisli (Zombie t)) a b -> Zombie t a -> Zombie t b
+mapZ f Sunlight = Sunlight
+mapZ f (ReturnZ x xs) = ReturnZ undefined  (mapZ f xs)
+mapZ f (BindZ x c xs) = BindZ x (Tree c f) (mapZ f xs)
 
 -- | Like 'hoistSkeleton'
 hoistZombie :: forall s t a. (forall x. s x -> t x) -> Zombie s a -> Zombie t a
