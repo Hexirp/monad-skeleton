@@ -52,16 +52,16 @@ liftZ t = embalm (t :>>= return)
 
 -- | Turn a decomposed form into a composed form.
 embalm :: MonadView t (Zombie t) a -> Zombie t a
-embalm t = Zombie (Spine t id) Sunlight
+embalm t = Zombie t id Sunlight
 {-# INLINE embalm #-}
 
 -- | Decompose a zombie as a list of possibilities.
 disembalm :: Zombie t a -> [MonadView t (Zombie t) a]
 disembalm Sunlight = []
-disembalm (Zombie x xs) = disembalm' x ++ disembalm xs
+disembalm (Zombie v c xs) = disembalm' v c ++ disembalm xs
 
-disembalm' :: Spine t (Zombie t) a -> [MonadView t (Zombie t) a]
-disembalm' (Spine v c) = case v of
+disembalm' :: MonadView t (Zombie t) x -> Cat (Kleisli (Zombie t)) x a -> [MonadView t (Zombie t) a]
+disembalm' v c = case v of
   Return a -> viewL c [Return a] $ \(Kleisli k) c' -> case k a of
     s -> disembalm $ mapZ (graftSpine c') s
   t :>>= k -> return $ t :>>= \a -> case k a of
