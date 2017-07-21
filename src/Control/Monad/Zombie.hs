@@ -63,14 +63,13 @@ disembalm (Zombie v c xs) = disembalm' v c ++ disembalm xs
 disembalm' :: MonadView t (Zombie t) x -> Cat (Kleisli (Zombie t)) x a -> [MonadView t (Zombie t) a]
 disembalm' v c = case v of
   Return a -> viewL c [Return a] $ \(Kleisli k) c' -> case k a of
-    s -> disembalm $ mapZ (graftSpine c') s
+    s -> disembalm $ mapZ c' s
   t :>>= k -> return $ t :>>= \a -> case k a of
-    s -> mapZ (graftSpine c) s
+    s -> mapZ c s
 
-mapZ :: (Spine t (Zombie t) a -> Spine t (Zombie t) b)
-     -> Zombie t a -> Zombie t b
+mapZ :: Cat (Kleisli (Zombie t)) a b -> Zombie t a -> Zombie t b
 mapZ f Sunlight = Sunlight
-mapZ f (Zombie x xs) = Zombie (f x) (mapZ f xs)
+mapZ f (Zombie v c xs) = Zombie v (Tree c f) (mapZ f xs)
 
 -- | Like 'hoistSkeleton'
 hoistZombie :: forall s t a. (forall x. s x -> t x) -> Zombie s a -> Zombie t a
