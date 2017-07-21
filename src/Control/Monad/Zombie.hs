@@ -35,14 +35,14 @@ instance Applicative (Zombie t) where
 instance Alternative (Zombie t) where
   empty = Sunlight
   Sunlight <|> y = y
-  ReturnZ x c xs <|> y = ReturnS x c (xs <|> y)
-  BindZ x z c xs <|> y = BindS x z c (xs <|> y)
+  ReturnZ x c xs <|> y = ReturnZ x c (xs <|> y)
+  BindZ y z c xs <|> y = BindZ y z c (xs <|> y)
 
 instance Monad (Zombie t) where
   return a = Zombie (Return a) id Sunlight
   Sunlight >>= k = Sunlight
   ReturnZ x c xs >>= k = Zombie x (Tree c $ Leaf $ Kleisli k) (xs >>= k)
-  BindZ x z c xs >>= k = Zombie x z (Tree c $ Leaf $ Kleisli k) (xs >>= k)
+  BindZ y z c xs >>= k = Zombie y z (Tree c $ Leaf $ Kleisli k) (xs >>= k)
 
 instance MonadPlus (Zombie t) where
   mzero = empty
@@ -55,7 +55,8 @@ liftZ t = embalm (t :>>= return)
 
 -- | Turn a decomposed form into a composed form.
 embalm :: MonadView t (Zombie t) a -> Zombie t a
-embalm t = Zombie t id Sunlight
+embalm (Return x) = ReturnZ x id Sunlight
+embalm (y :>>= z) = BindZ y z id Sunlight
 {-# INLINE embalm #-}
 
 -- | Decompose a zombie as a list of possibilities.
