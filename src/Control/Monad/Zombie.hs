@@ -39,7 +39,7 @@ instance Alternative (Zombie t) where
   BindZ y z c xs <|> ys = BindZ y z c (xs <|> ys)
 
 instance Monad (Zombie t) where
-  return a = Zombie (Return a) id Sunlight
+  return a = ReturnZ a id Sunlight
   Sunlight >>= k = Sunlight
   ReturnZ x c xs >>= k = ReturnZ x (Tree c $ Leaf $ Kleisli k) (xs >>= k)
   BindZ y z c xs >>= k = BindZ y z (Tree c $ Leaf $ Kleisli k) (xs >>= k)
