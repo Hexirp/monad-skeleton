@@ -21,8 +21,8 @@ graftSpine c (Spine v d) = Spine v (Tree d c)
 -- | 'Zombie' is a variant of 'Skeleton' which has an 'Alternative' instance.
 data Zombie t a where
  Sunlight :: Zombie t a
- ReturnZ :: x -> Cat (Kleisli (Zombie t)) x a -> Zombie t a -> Zombie t a
- BindZ :: t y -> (y -> Zombie t x) -> Cat (Kleisli (Zombie t)) x a -> Zombie t a -> Zombie t a
+ ReturnZ :: a -> Zombie t a -> Zombie t a
+ BindZ :: t y -> Cat (Kleisli (Zombie t)) y a -> Zombie t a -> Zombie t a
 
 instance Functor (Zombie t) where
   fmap = liftM
