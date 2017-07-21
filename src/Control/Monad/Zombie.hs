@@ -41,8 +41,8 @@ instance Alternative (Zombie t) where
 instance Monad (Zombie t) where
   return a = Zombie (Return a) id Sunlight
   Sunlight >>= k = Sunlight
-  ReturnZ x c xs >>= k = Zombie x (Tree c $ Leaf $ Kleisli k) (xs >>= k)
-  BindZ y z c xs >>= k = Zombie y z (Tree c $ Leaf $ Kleisli k) (xs >>= k)
+  ReturnZ x c xs >>= k = ReturnZ x (Tree c $ Leaf $ Kleisli k) (xs >>= k)
+  BindZ y z c xs >>= k = BindZ y z (Tree c $ Leaf $ Kleisli k) (xs >>= k)
 
 instance MonadPlus (Zombie t) where
   mzero = empty
@@ -62,18 +62,21 @@ embalm (y :>>= z) = BindZ y z id Sunlight
 -- | Decompose a zombie as a list of possibilities.
 disembalm :: Zombie t a -> [MonadView t (Zombie t) a]
 disembalm Sunlight = []
-disembalm (Zombie v c xs) = disembalm' v c ++ disembalm xs
+disembalm (ReturnZ x c xs) = disembalmR x c ++ disembalm xs
+disembalm (BindZ y z c xs) = disembalmB y z c ++ disembalm xs
 
-disembalm' :: MonadView t (Zombie t) x -> Cat (Kleisli (Zombie t)) x a -> [MonadView t (Zombie t) a]
-disembalm' v c = case v of
-  Return a -> viewL c [Return a] $ \(Kleisli k) c' -> case k a of
-    s -> disembalm $ mapZ c' s
-  t :>>= k -> return $ t :>>= \a -> case k a of
-    s -> mapZ c s
+disembalmR :: x -> Cat (Kleisli (Zombie t)) x a -> [MonadView t (Zombie t) a]
+disembalmR x c = viewL c [Return x] $ \(Kleisli k) c' -> case k x of
+  s -> disembalm $ mapZ c' s
+
+disembalmB :: t y -> (y -> Zombie t x) -> Cat (Kleisli (Zombie t)) x a -> [MonadView t (Zombie t) a]
+disembalmB y z c = return $ y :>>= \a -> case z a of
+  s -> mapZ c s
 
 mapZ :: Cat (Kleisli (Zombie t)) a b -> Zombie t a -> Zombie t b
 mapZ f Sunlight = Sunlight
-mapZ f (Zombie v c xs) = Zombie v (Tree c f) (mapZ f xs)
+mapZ f (ReturnZ x c xs) = ReturnZ x (Tree c f) (mapZ f xs)
+mapZ f (BindZ y z c xs) = BindZ y z (Tree c f) (mapZ f xs)
 
 -- | Like 'hoistSkeleton'
 hoistZombie :: forall s t a. (forall x. s x -> t x) -> Zombie s a -> Zombie t a
