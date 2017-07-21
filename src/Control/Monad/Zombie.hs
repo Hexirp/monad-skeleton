@@ -83,5 +83,6 @@ hoistZombie :: forall s t a. (forall x. s x -> t x) -> Zombie s a -> Zombie t a
 hoistZombie f = go where
   go :: forall x. Zombie s x -> Zombie t x
   go Sunlight = Sunlight
-  go (Zombie v c xs) = Zombie (hoistMV f go v) (transCat (transKleisli go) c) (go xs)
+  go (ReturnZ x c xs) = ReturnZ x (transCat (transKleisli go) c) (go xs)
+  go (BindZ y z c xs) = BindZ (f y) (go . z) (transCat (transKleisli go) c) (go xs)
 {-# INLINE hoistZombie #-}
