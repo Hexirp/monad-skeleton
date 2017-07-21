@@ -35,14 +35,14 @@ instance Applicative (Zombie t) where
 instance Alternative (Zombie t) where
   empty = Sunlight
   Sunlight <|> ys = ys
-  ReturnZ x c xs <|> ys = ReturnZ x c (xs <|> ys)
-  BindZ y z c xs <|> ys = BindZ y z c (xs <|> ys)
+  ReturnZ x xs <|> ys = ReturnZ x (xs <|> ys)
+  BindZ x c xs <|> ys = BindZ x c (xs <|> ys)
 
 instance Monad (Zombie t) where
-  return a = ReturnZ a id Sunlight
+  return a = ReturnZ a Sunlight
   Sunlight >>= k = Sunlight
-  ReturnZ x c xs >>= k = ReturnZ x (Tree c $ Leaf $ Kleisli k) (xs >>= k)
-  BindZ y z c xs >>= k = BindZ y z (Tree c $ Leaf $ Kleisli k) (xs >>= k)
+  ReturnZ x xs >>= k = (k x) <|> (xs >>= k)
+  BindZ x c xs >>= k = BindZ x (Tree c $ Leaf $ Kleisli k) (xs >>= k)
 
 instance MonadPlus (Zombie t) where
   mzero = empty
