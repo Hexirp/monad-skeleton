@@ -7,7 +7,7 @@ import Control.Monad.Zombie
 
 data PF a where
  PF :: PF ()
- 
+
 type P a = Zombie PF a
 
 zero_and_one :: P ()
