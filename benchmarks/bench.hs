@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 
 import Prelude
+import qualified Criterion.Main as Cri
 import Control.Applicative
 import Control.Monad.Skeleton
 import Control.Monad.Zombie
@@ -19,13 +20,16 @@ suite :: Int -> P ()
 suite n = case compare n 0 of
  LT -> error "negative!"
  EQ -> return ()
- GT -> bench (n - 1) >> zero_and_one
+ GT -> suite (n - 1) >> zero_and_one
 
 run :: P () -> [Int]
 run x = foldr r [] (disembalm x) where
  r :: MonadView PF (Zombie PF) () -> [Int] -> [Int]
  r (Return ()) xs = 0 : xs
  r (PF :>>= f) xs = (map (+ 1) $ run $ f ()) ++ xs
+
+bench :: Int -> [Int]
+bench = run . suite
 
 data OF a where
  OF :: OF ()
@@ -39,10 +43,22 @@ suite_o :: Int -> O ()
 suite_o n = case compare n 0 of
  LT -> error "negative!"
  EQ -> return ()
- GT -> bench_o (n - 1) >> zero_and_one_o
+ GT -> suite_o (n - 1) >> zero_and_one_o
 
 run_o :: O () -> [Int]
 run_o x = foldr r [] (Old.disembalm x) where
  r :: MonadView OF (Old.Zombie OF) () -> [Int] -> [Int]
  r (Return ()) xs = 0 : xs
  r (OF :>>= f) xs = (map (+ 1) $ run_o $ f ()) ++ xs
+
+bench_o :: Int -> [Int]
+bench_o = run_o . suite_o
+
+main :: IO ()
+main = Cri.defaultMain [
+ Cri.bgroup "bench" $ [ Cri.bench "new_8" $ Cri.nf bench 8
+            , Cri.bench "old_8" $ Cri.nf bench_o 8
+            , Cri.bench "new_10" $ Cri.nf bench 10
+            , Cri.bench "old_10" $ Cri.nf bench_o 10
+            ]
+ ]
