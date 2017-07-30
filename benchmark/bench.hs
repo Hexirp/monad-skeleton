@@ -15,8 +15,8 @@ type P a = Zombie PF a
 zero_and_one :: P ()
 zero_and_one = return () <|> liftZ PF
 
-bench :: Int -> P ()
-bench n = case compare n 0 of
+suite :: Int -> P ()
+suite n = case compare n 0 of
  LT -> error "negative!"
  EQ -> return ()
  GT -> bench (n - 1) >> zero_and_one
@@ -35,8 +35,8 @@ type O a = Old.Zombie OF a
 zero_and_one_o :: O ()
 zero_and_one_o = return () <|> Old.liftZ OF
 
-bench_o :: Int -> O ()
-bench_o n = case compare n 0 of
+suite_o :: Int -> O ()
+suite_o n = case compare n 0 of
  LT -> error "negative!"
  EQ -> return ()
  GT -> bench_o (n - 1) >> zero_and_one_o
