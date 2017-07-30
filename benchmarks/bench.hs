@@ -56,9 +56,9 @@ bench_o = run_o . suite_o
 
 main :: IO ()
 main = Cri.defaultMain [
- Cri.bgroup "bench" $ [ Cri.bench "new_8" $ Cri.nf bench 8
-            , Cri.bench "old_8" $ Cri.nf bench_o 8
-            , Cri.bench "new_10" $ Cri.nf bench 10
-            , Cri.bench "old_10" $ Cri.nf bench_o 10
+ Cri.bgroup "bench" $ [ Cri.bench "new_12" $ Cri.nf bench 12
+            , Cri.bench "old_12" $ Cri.nf bench_o 12
+            , Cri.bench "new_14" $ Cri.nf bench 14
+            , Cri.bench "old_14" $ Cri.nf bench_o 14
             ]
  ]
