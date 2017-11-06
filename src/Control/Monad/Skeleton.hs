@@ -93,8 +93,7 @@ iterMV f = go where
 -- Skeletons can be fleshed out by getting transformed to other monads.
 -- It provides O(1) ('>>=') and 'debone', the monadic reflection.
 data Skeleton t a where
-  ReturnS :: a -> Skeleton t a
-  BindS :: t a -> Spider (Kleisli (Skeleton t)) a b -> Skeleton t b
+  Skeleton :: Spider (Kleisli (Skeleton t)) x a -> t x -> Skeleton t a
 
 instance Functor (Skeleton t) where
   fmap = liftM
@@ -110,6 +109,5 @@ instance Applicative (Skeleton t) where
   a <* b = a >>= \x -> b >> return x
 
 instance Monad (Skeleton t) where
-  return = ReturnS
-  ReturnS a >>= k = k a
-  BindS t c >>= k = BindS t (c |> Kleisli k)
+  return = Skeleton NilS
+  Skeleton k x >>= f = Skeleton (ConS f k) x
