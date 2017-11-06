@@ -1,8 +1,6 @@
-{-# LANGUAGE PolyKinds, GADTs, Rank2Types, ScopedTypeVariables, Trustworthy #-}
+{-# LANGUAGE PolyKinds, GADTs, Rank2Types, ScopedTypeVariables, Safe #-}
 module Control.Category.Spider (Cat(..), transCat, (|>), viewL, transKleisli) where
-
 import Control.Arrow
-import Unsafe.Coerce
 
 data Cat k a b where
   Leaf :: k a b -> Cat k a b
@@ -28,5 +26,5 @@ viewL (Tree a b) _ r = go a b where
   go (Tree c d) t = go c (Tree d t)
 
 transKleisli :: (m b -> n b) -> Kleisli m a b -> Kleisli n a b
-transKleisli f = unsafeCoerce (f Prelude..)
+transKleisli f (Kleisli k) = Kleisli (f . k)
 {-# INLINE transKleisli #-}
