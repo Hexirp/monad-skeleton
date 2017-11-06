@@ -27,7 +27,7 @@ boned (t :>>= k) = BindS t $ Leaf $ Kleisli k
 debone :: Skeleton t a -> MonadView t (Skeleton t) a
 debone (ReturnS a) = Return a
 debone (BindS t c0) = t :>>= go c0 where
-  go :: Cat (Kleisli (Skeleton t)) a b -> a -> Skeleton t b
+  go :: Spider (Kleisli (Skeleton t)) a b -> a -> Skeleton t b
   go c a = viewL c (\(Kleisli k) -> k a) $ \(Kleisli k) c' -> case k a of
     ReturnS b -> go c' b
     BindS t' c'' -> BindS t' (Tree c'' c')
@@ -61,7 +61,7 @@ hoistSkeleton :: forall s t a. (forall x. s x -> t x) -> Skeleton s a -> Skeleto
 hoistSkeleton f = go where
   go :: forall x. Skeleton s x -> Skeleton t x
   go (ReturnS a) = ReturnS a
-  go (BindS t c) = BindS (f t) $ transCat (transKleisli go) c
+  go (BindS t c) = BindS (f t) $ transSpider (transKleisli go) c
 {-# INLINE hoistSkeleton #-}
 
 -- | A deconstructed action
@@ -94,7 +94,7 @@ iterMV f = go where
 -- It provides O(1) ('>>=') and 'debone', the monadic reflection.
 data Skeleton t a where
   ReturnS :: a -> Skeleton t a
-  BindS :: t a -> Cat (Kleisli (Skeleton t)) a b -> Skeleton t b
+  BindS :: t a -> Spider (Kleisli (Skeleton t)) a b -> Skeleton t b
 
 instance Functor (Skeleton t) where
   fmap = liftM

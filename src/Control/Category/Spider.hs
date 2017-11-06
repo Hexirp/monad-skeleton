@@ -1,27 +1,27 @@
 {-# LANGUAGE PolyKinds, GADTs, Rank2Types, ScopedTypeVariables, Safe #-}
-module Control.Category.Spider (Cat(..), transCat, (|>), viewL, transKleisli) where
+module Control.Category.Spider (Spider(..), transSpider, (|>), viewL, transKleisli) where
 import Control.Arrow
 
-data Cat k a b where
-  Leaf :: k a b -> Cat k a b
-  Tree :: Cat k a b -> Cat k b c -> Cat k a c
+data Spider k a b where
+  Leaf :: k a b -> Spider k a b
+  Tree :: Spider k a b -> Spider k b c -> Spider k a c
 
-transCat :: (forall x y. j x y -> k x y) -> Cat j a b -> Cat k a b
-transCat f (Tree a b) = transCat f a `Tree` transCat f b
-transCat f (Leaf k) = Leaf (f k)
-{-# INLINE transCat #-}
+transSpider :: (forall x y. j x y -> k x y) -> Spider j a b -> Spider k a b
+transSpider f (Tree a b) = transSpider f a `Tree` transSpider f b
+transSpider f (Leaf k) = Leaf (f k)
+{-# INLINE transSpider #-}
 
-(|>) :: Cat k a b -> k b c -> Cat k a c
+(|>) :: Spider k a b -> k b c -> Spider k a c
 s |> k = Tree s (Leaf k)
 {-# INLINE (|>) #-}
 
-viewL :: forall k a b r. Cat k a b
+viewL :: forall k a b r. Spider k a b
   -> (k a b -> r)
-  -> (forall x. k a x -> Cat k x b -> r)
+  -> (forall x. k a x -> Spider k x b -> r)
   -> r
 viewL (Leaf k) e _ = e k
 viewL (Tree a b) _ r = go a b where
-  go :: Cat k a x -> Cat k x b -> r
+  go :: Spider k a x -> Spider k x b -> r
   go (Leaf k) t = r k t
   go (Tree c d) t = go c (Tree d t)
 

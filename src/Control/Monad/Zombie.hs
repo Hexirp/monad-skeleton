@@ -17,7 +17,7 @@ import Prelude hiding (id, (.))
 data Zombie t a where
   Sunlight :: Zombie t a
   ReturnZ :: a -> Zombie t a -> Zombie t a
-  BindZ :: t x -> Cat (Kleisli (Zombie t)) x a -> Zombie t a -> Zombie t a
+  BindZ :: t x -> Spider (Kleisli (Zombie t)) x a -> Zombie t a -> Zombie t a
 
 instance Functor (Zombie t) where
   fmap = liftM
@@ -67,11 +67,11 @@ disembalmBy e r = go where
   go (BindZ x c xs) = (x :>>= disembalm_go c) `r` go xs
 {-# INLINE disembalmBy #-}
 
-disembalm_go :: Cat (Kleisli (Zombie t)) a b -> a -> Zombie t b
+disembalm_go :: Spider (Kleisli (Zombie t)) a b -> a -> Zombie t b
 disembalm_go c a = viewL c (\k -> runKleisli k a) $
   \k d -> disembalm_go2 d $ runKleisli k a
 
-disembalm_go2 :: Cat (Kleisli (Zombie t)) a b -> Zombie t a -> Zombie t b
+disembalm_go2 :: Spider (Kleisli (Zombie t)) a b -> Zombie t a -> Zombie t b
 disembalm_go2 c = go where
   go Sunlight = Sunlight
   go (ReturnZ a xs) = disembalm_go c a <|> go xs
@@ -83,5 +83,5 @@ hoistZombie f = go where
   go :: forall x. Zombie s x -> Zombie t x
   go Sunlight = Sunlight
   go (ReturnZ x xs) = ReturnZ x (go xs)
-  go (BindZ x c xs) = BindZ (f x) (transCat (transKleisli go) c) (go xs)
+  go (BindZ x c xs) = BindZ (f x) (transSpider (transKleisli go) c) (go xs)
 {-# INLINE hoistZombie #-}
