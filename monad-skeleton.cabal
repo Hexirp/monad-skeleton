@@ -24,7 +24,7 @@ source-repository head
 
 library
   exposed-modules:     Control.Monad.Skeleton
-    , Control.Monad.Skeleton.Internal
+    , Control.Category.Spider
     , Control.Monad.Zombie
   build-depends:       base == 4.*
   hs-source-dirs: src

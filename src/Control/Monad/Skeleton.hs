@@ -14,7 +14,7 @@ import Control.Arrow
 import Control.Applicative
 import Control.Monad
 import Control.Category
-import Control.Monad.Skeleton.Internal
+import Control.Category.Spider
 import Prelude hiding (id, (.))
 
 -- | Re-add a bone.

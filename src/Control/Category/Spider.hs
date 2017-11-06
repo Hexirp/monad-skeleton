@@ -1,5 +1,5 @@
 {-# LANGUAGE PolyKinds, GADTs, Rank2Types, ScopedTypeVariables, Trustworthy #-}
-module Control.Monad.Skeleton.Internal (Cat(..), transCat, (|>), viewL, transKleisli) where
+module Control.Category.Spider (Cat(..), transCat, (|>), viewL, transKleisli) where
 
 import Control.Arrow
 import Unsafe.Coerce
