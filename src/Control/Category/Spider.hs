@@ -3,27 +3,30 @@ module Control.Category.Spider (Spider(..), transSpider, (|>), viewL, transKleis
 import Control.Arrow
 
 data Spider k a b where
-  Leaf :: k a b -> Spider k a b
-  Tree :: Spider k a b -> Spider k b c -> Spider k a c
+  NilS :: Spider k a a
+  ConS :: k b c -> Spider k a b -> Spider k a c
 
-transSpider :: (forall x y. j x y -> k x y) -> Spider j a b -> Spider k a b
-transSpider f (Tree a b) = transSpider f a `Tree` transSpider f b
-transSpider f (Leaf k) = Leaf (f k)
+transSpider :: forall j k a b. (forall x y. j x y -> k x y) -> Spider j a b -> Spider k a b
+transSpider f = go where
+  go :: forall a' b'. Spider j a' b' -> Spider k a' b'
+  go NilS = NilS
+  go (ConS a b) = ConS (f a) (go b)
 {-# INLINE transSpider #-}
 
-(|>) :: Spider k a b -> k b c -> Spider k a c
-s |> k = Tree s (Leaf k)
+(|>) :: k b c -> Spider k a b -> Spider k a c
+(|>) = ConS
 {-# INLINE (|>) #-}
 
-viewL :: forall k a b r. Spider k a b
-  -> (k a b -> r)
-  -> (forall x. k a x -> Spider k x b -> r)
-  -> r
-viewL (Leaf k) e _ = e k
-viewL (Tree a b) _ r = go a b where
-  go :: Spider k a x -> Spider k x b -> r
-  go (Leaf k) t = r k t
-  go (Tree c d) t = go c (Tree d t)
+viewL :: forall r k x a
+  .  r x
+  -> (forall b c. k b c -> r b -> r c)
+  -> Spider k x a
+  -> r a
+viewL e r = go where
+  go :: forall a'. Spider k x a' -> r a'
+  go NilS = e
+  go (ConS x y) = r x (go y)
+{-# INLINE viewL #-}
 
 transKleisli :: (m b -> n b) -> Kleisli m a b -> Kleisli n a b
 transKleisli f (Kleisli k) = Kleisli (f . k)
